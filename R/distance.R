@@ -2,7 +2,7 @@
 #'
 #' @description This function is an extended version of [stats::dist()] which computes
 #'   and returns the distance matrix using the specified distance measure to compute
-#'   the distances between the rows of a data matrix.
+#'   the distances between the rows or columns of a data matrix.
 #' @param x
 #' @param method
 #' @param diag
@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-dist <- function(
+distance <- function(
     x,
     method = c("euclidean","pearson","pearsonm","rmsd","multimetric","maximum","manhattan","canberra",
                "binary","minkowski", "presence"
@@ -32,24 +32,28 @@ dist <- function(
                      "binary","minkowski") && which == "column") {
     stop("Default distance methods not implemented via column yet.")
   }
-  switch(method,
-         euclidean = calculate_distance(x, which = which, euclidean_distance, ...),
-         pearson = calculate_distance(x, which = which, pearson_distance, ...),
-         pearsonm = calculate_distance(x, which = which, pearsonm_distance, ...),
-         rmsd = calculate_distance(x, which = which, rmsd_distance, ...),
-         presence = calculate_distance(x, which = which, presence_distance, ...),
-         multimetric = calculate_distance(x, which = which, multimetric_distance, ...),
-         stats::dist(x, method=method, diag=diag,upper=upper,p=p,...)
-  )
 
+  if ( which == "row" ) {
+    d <- switch(method,
+           euclidean = rowDistance(x, euclidean_distance),
+           pearson = rowDistance(x,  pearson_distance),
+           pearsonm = rowDistance(x, pearsonm_distance),
+           rmsd = rowDistance(x,  rmsd_distance),
+           stats::dist(x, method=method, diag=diag,upper=upper,p=p)
+    )
+  } else {
+    d <- switch(method,
+           euclidean = colDistance(x, euclidean_distance),
+           pearson = colDistance(x,  pearson_distance),
+           pearsonm = colDistance(x,  pearsonm_distance),
+           rmsd = colDistance(x, rmsd_distance),
+           stats::dist(x, method=method, diag=diag,upper=upper,p=p)
+    )
+  }
+
+  d
 }
 
-calculate_distance <- function(x, which = "row", ...) {
-  if ( which == "row" )
-    calculate_distance_by_row(x, ...)
-  else
-    calculate_distance_by_column(x, ...)
-}
 #' Calculate distances between rows in a matrix
 #'
 #' @description Calculate distances between rows of a matrix using the given
@@ -63,7 +67,7 @@ calculate_distance <- function(x, which = "row", ...) {
 #' @export
 #'
 #' @examples
-calculate_distance_by_row <- function(x, f = euclidean_distance, ...) {
+rowDistance <- function(x, f = euclidean_distance) {
   x <- as.matrix(x)
   # Initialize array of results
   m <- matrix(
@@ -77,11 +81,11 @@ calculate_distance_by_row <- function(x, f = euclidean_distance, ...) {
   for (pair in offdiag) {
     i <- pair[1]
     j <- pair[2]
-    m[i, j] <- m[j, i] <- f(x[i,],x[j, ], ...)
+    m[i, j] <- m[j, i] <- f(x[i,],x[j, ])
   }
   # Then f for diagonal
   for (i in 1:nrow(x)) {
-    m[i, i] <- f(x[i,], x[i,], ...)
+    m[i, i] <- f(x[i,], x[i,])
   }
 
   as.dist(m)
@@ -102,7 +106,7 @@ calculate_distance_by_row <- function(x, f = euclidean_distance, ...) {
 #' @export
 #'
 #' @examples
-calculate_distance_by_column <- function(x, f = euclidean_distance, ...) {
+colDistance <- function(x, f = euclidean_distance) {
   x <- as.matrix(x)
   # Initialize array of results
   m <- matrix(
@@ -116,44 +120,17 @@ calculate_distance_by_column <- function(x, f = euclidean_distance, ...) {
   for (pair in offdiag) {
     i <- pair[1]
     j <- pair[2]
-    m[i, j] <- m[j, i] <- f(x[,i],x[,j], ...)
+    m[i, j] <- m[j, i] <- f(x[,i],x[,j])
   }
   # Then f for diagonal
   for (i in 1:ncol(x)) {
-    m[i, i] <- f(x[,i], x[,i], ...)
+    m[i, i] <- f(x[,i], x[,i])
   }
 
   as.dist(m)
 }
 
 
-#' Use multiple metrics combined as distance metric
-#'
-#' @details
-#' Note that this particular approach can be very misleading, as distance
-#' metrics (or measures) can be used and may be on different scales.
-#'
-#' @param x Vector 1
-#' @param y Vector 2
-#' @param methods A list of methods (functions) to apply and combine via geometric mean
-#'
-#' @return The distance between x and y by calculating the geometric mean of
-#'  a number of different methods.
-#' @export
-#'
-#' @examples
-#'
-multimetric_distance <- function(x, y, methods, summarize_by = geometric_mean, ...) {
-  stopifnot(all(sapply(methods, is.function)), is.function(summarize_by))
-
-  # Compute all distance metrics
-  p <- sapply(methods, function(m) {
-    m(x, y, ...)
-  })
-
-  summarize_by(p)
-
-}
 
 
 #' Calculate rmsd between two vectors
@@ -165,9 +142,15 @@ multimetric_distance <- function(x, y, methods, summarize_by = geometric_mean, .
 #' @export
 #'
 #' @examples
-rmsd_distance <- function(x, y, na.rm = TRUE) {
+rmsd_distance <- function(x, y) {
   stopifnot(is.vector(x),is.vector(y))
-  sqrt(mean((x - y)^2, na.rm = na.rm))
+
+
+  d <- mean((x - y)^2, na.rm = na.rm)
+
+  d <- d * na.dist_norm(x,y)
+
+  sqrt(d)
 }
 
 #' Title
@@ -179,16 +162,16 @@ rmsd_distance <- function(x, y, na.rm = TRUE) {
 #' @export
 #'
 #' @examples
-euclidean_distance <- function(x, y, na.rm = TRUE) {
+euclidean_distance <- function(x, y) {
   stopifnot(is.vector(x),is.vector(y))
 
-  if ( na.rm ) {
-    i <- is.na(x) | is.na(y)
-    x <- x[!i]
-    y <- y[!i]
-  }
+  i <- is.na(x) | is.na(y)
 
-  sqrt(sum((x-y)^2))
+  d <- sum(( x[!i] - y[!i] )^2)
+
+  d <- d * na.dist_norm(x,y)
+
+  sqrt(d)
 }
 
 #' Title
@@ -200,9 +183,14 @@ euclidean_distance <- function(x, y, na.rm = TRUE) {
 #' @export
 #'
 #' @examples
-pearson_distance <- function(x,y, na.rm = TRUE) {
+pearson_distance <- function(x,y) {
   stopifnot(is.vector(x),is.vector(y))
-  1-cor(x, y, method="pearson", use = "pairwise.complete.obs")
+  d <- 1-cor(x, y, method="pearson", use = "pairwise.complete.obs")
+
+
+    d <- d * na.dist_norm(x, y)
+
+  d
 }
 
 #' Calculate distance metric based on Pearson correlation
@@ -218,45 +206,55 @@ pearson_distance <- function(x,y, na.rm = TRUE) {
 #' "Metric distance derived from cosine similarity and Pearson
 #'      *  and Spearman correlations"
 #'
-#' @param x
-#' @param y
-pearsonm_distance <- function(x, y, na.rm = TRUE) {
+#' @param x Vector
+#' @param y Vector
+pearsonm_distance <- function(x, y) {
   stopifnot(is.vector(x),is.vector(y))
 
-  r <- pearson_distance(x, y, na.rm = na.rm)
+  r <- pearson_distance(x, y)
   sqrt(0.5 * r)
 }
 
-#' Calculate distance metric based on presence of value
+
+
+
+#' Calculate distance normalization factor based on missingness
 #'
-#' @description Calculate the distance between two vectors as the
-#' proportion of values non-NA out of the number of non-NA values in
-#' the second vector.
+#' @description Calculates the distance normalization factor (NORMAL) for
+#'  missing data (see details). This is a multiplicative factor which
+#'  when multiplied by distance, increases distances by the number of
+#'  missing values.
 #'
-#' @details
+#' @details When calculating distances between two vectors, the number of
+#' missing values in these vectors can impact on the distance. With too few
+#' non-missing values, the distance may be inflated.
 #'
-#' Conditional probability of #overlap given #query.
+#' This function is a helper function that be used in the [distance()] functions
+#' in this package to include a distance penalty for missingness. Specifically,
+#' each distance function provides a `na.action` parameter which will multiply
+#' a distance penalty (as implemented here) with the distance calculation.
 #'
-#' This is asymmetric, but that's what we want in this case.
-#' We are searching for candidate reference samples.
-#' Say that we have a reference with 100% present, and the query
-#' is only 25% present.  We don't want to use some similarity metric
-#' that combines those two #present together, since we want to know
-#' if the query is maximally covered or not.  #overlap / #query will
-#' be 1.0, since it is fully covered.  The other way around,
-#' #overlap / #target, would be 0.25.  This is the scoring behavior
-#' we want, since the first case indicates a good reference sample
-#' and the 2nd case indicates a poorer reference sample.
+#' This function implements a common approach that is given in:
+#' \preformatted{
+#' John K. Dixon
+#' "Pattern Recognition with Partly Missing Data"
+#' IEEE Transactions on Systems, Man, and Cybernetics
+#' Volume: 9, Issue: 10, pp. 617 - 621, Oct. 1979.
+#' http://ieeexplore.ieee.org/abstract/document/4310090/
+#' }
 #'
-#' @param x
-#' @param y
-#' @param ...
+#' In this approach (defined for squared Euclidean distance), the normalization
+#' factor is
+#' \eqn{\dfrac{N}{N-NB}}
+#' where `N` is the total number of observations and `NB` is the number of blanks.
 #'
-#' @return
-#' @export
-#'
-#' @examples
-presence_distance <- function(x, y, ...) {
-  length(which(!is.na(x) & !is.na(y)))/length(which(!is.na(y)))
+#' Note that when computing the Euclidean distance (as was done in the paper),
+#' the normalization factor is multiplied by the sum of squared differences. Then
+#' the square root could be applied to the entire term. The assumption for this
+#' function is that any modification is d
+na.dist_norm <- function(x, y) {
+  i <- is.na(x) | is.na(y)
+  length(x) / sum(!i)
 }
+
 
