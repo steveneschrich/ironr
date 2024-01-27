@@ -19,7 +19,7 @@
 static int is_16bit(double *x, int nx);
 
 /***********************************************************************
- * filter
+ * filter_signal
  * Filter vector based on signal heuristics.
  *
  * Using two vectors (x and y), apply heuristics to indicate
@@ -46,7 +46,7 @@ static int is_16bit(double *x, int nx);
  * in both. This avoids an over-emphasis on repeated values during subsequent
  * training.
  */
-int *filter(double *x, double *y, int nx, int *exclude,
+int *filter_signal(double *x, double *y, int nx, int *exclude,
             int exclude_16bit_saturation,
             int exclude_empirical_minimum,
             int exclude_duplicates) {

@@ -55,12 +55,12 @@ struct eqn_window
 /* Main entry points for library */
 
 /* Filter parallel vectors by signal characteristics */
-int *filter(double *x, double *y, int nx, int *exclude,
+int *filter_signal(double *x, double *y, int nx, int *exclude,
             int exclude_16bit_saturation,
             int exclude_empirical_minimum,
             int exclude_duplicates);
 /* Iterative rank order filtering */
-int *irof(double *x, double *y, int nx, int *exclude,
+int *filter_iro(double *x, double *y, int nx, int *exclude,
           double min_rankdiff_percentile_threshold);
 
 

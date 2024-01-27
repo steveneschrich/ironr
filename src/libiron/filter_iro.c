@@ -13,7 +13,7 @@
 static int calculate_rankdiff_threshold(int *rank_differences, int nx, int *exclude,
                                  double min_rankdiff_percentile_threshold);
 
-/* irof
+/* filter_iro
  * Iterative rank-order filtering of two vectors
  *
  * @description Iteratively filter out values from two parallel vectors
@@ -24,7 +24,7 @@ static int calculate_rankdiff_threshold(int *rank_differences, int nx, int *excl
  * use for changepoints/knees in the piecewise function. It does so by iteratively
  * filtering values from two parallel vectors that have the largest rank differences.
  *
- * IROF filters out values with large rank differences. Large rank differences
+ * IRO filters out values with large rank differences. Large rank differences
  * (threshold) is defined as 5% less than the maximum observed rank difference.
  * When this threshold is 1, filtering stops; or when the percentile of the
  * threshold (relative to all rank differences) is less than 1%.
@@ -39,7 +39,7 @@ static int calculate_rankdiff_threshold(int *rank_differences, int nx, int *excl
  * @return A dynamically allocated logical (int) array indicating if the
  * value is to be excluded.
  */
-int *irof(double *x, double *y, int nx, int *exclude,
+int *filter_iro(double *x, double *y, int nx, int *exclude,
             double min_rankdiff_percentile_threshold) {
 
   int i;
