@@ -88,7 +88,7 @@ rowDistance <- function(x, f = euclidean_distance) {
     m[i, i] <- f(x[i,], x[i,])
   }
 
-  as.dist(m)
+  stats::as.dist(m)
 }
 
 
@@ -127,7 +127,7 @@ colDistance <- function(x, f = euclidean_distance) {
     m[i, i] <- f(x[,i], x[,i])
   }
 
-  as.dist(m)
+  stats::as.dist(m)
 }
 
 
@@ -146,7 +146,7 @@ rmsd_distance <- function(x, y) {
   stopifnot(is.vector(x),is.vector(y))
 
 
-  d <- mean((x - y)^2, na.rm = na.rm)
+  d <- mean((x - y)^2, na.rm = TRUE)
 
   d <- d * na.dist_norm(x,y)
 
@@ -185,7 +185,7 @@ euclidean_distance <- function(x, y) {
 #' @examples
 pearson_distance <- function(x,y) {
   stopifnot(is.vector(x),is.vector(y))
-  d <- 1-cor(x, y, method="pearson", use = "pairwise.complete.obs")
+  d <- 1 - stats::cor(x, y, method="pearson", use = "pairwise.complete.obs")
 
 
     d <- d * na.dist_norm(x, y)

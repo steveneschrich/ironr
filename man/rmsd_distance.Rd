@@ -4,7 +4,7 @@
 \alias{rmsd_distance}
 \title{Calculate rmsd between two vectors}
 \usage{
-rmsd_distance(x, y, na.action = na.dist_norm)
+rmsd_distance(x, y)
 }
 \arguments{
 \item{y}{}

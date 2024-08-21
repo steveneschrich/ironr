@@ -2,20 +2,33 @@
 % Please edit documentation in R/summary.R
 \name{geometric_mean}
 \alias{geometric_mean}
-\title{Calculate geometric mean of vector}
+\title{Calculate geometric mean of values from vector}
 \usage{
-geometric_mean(x, na.rm = TRUE, positive_only = TRUE)
+geometric_mean(x, na.rm = TRUE)
 }
 \arguments{
 \item{x}{Vector}
 
-\item{na.rm}{(TRUE) Remove NA before calculating}
-
-\item{positive_only}{(TRUE) Are only positive values used in geometric mean?}
+\item{na.rm}{Remove NA values before computing}
 }
 \value{
 The geometric mean of the input vector
 }
 \description{
-Calculate geometric mean of vector
+Calculates the geometric mean of a vector of values. Only
+positive values and non-missing values are used.
+}
+\details{
+According to a robust discussion at https://stackoverflow.com/questions/2602583/geometric-mean-is-there-a-built-in,
+the geometric mean is a complicated summary unless all values are positive.
+There are several considerations: NA, 0 and negative values. These generally
+make the geometric mean either undefined or 0, indicating the problem.
+
+The use of this function is generally for computing a geometric mean from
+data that may have missing values and some negative values. The goal is to
+have a robust geometric mean that will provide reasonable estimates despite
+data with these features. This function takes the approach of removing
+everything else and the computing the gm. It is not correct, but it is
+appropriate for this package. Be warned if there is interest in using this
+beyond the package (or even within the package for other purposes).
 }

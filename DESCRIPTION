@@ -1,21 +1,34 @@
 Package: ironr
-Title: A R-based Reimplementation of the libaffy C Library.
+Title: A R-based Reimplementation of the libaffy IRON Software
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Steven",
+           family = "Eschrich",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
+           email = "Steven.Eschrich@moffitt.org",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: The libaffy C software library included a new normalization technique
+ known as IRON (Iterative Rank-Order Normalization). The algorithm was shown to be
+ effective at normalizing data, not just gene expression microarray data but other
+ types (e.g., proteomics, metabolomics, etc) as well. It was embedded within a C
+ library (libaffy) used for processing Affymetrix microarrays. The key functionality
+ of that approach has been ported to R code and, while not providing identical
+ output, reimplements the key IRON algorithm.
 License: What license it uses
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
     affy,
     affyio,
+    dplyr,
+    fs,
+    oligo,
+    stringr,
     vctrs
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
+VignetteBuilder: knitr

@@ -45,10 +45,22 @@ new_exemplar <- function(x = NULL, index, which = c("row","col"),
 #' @export
 #'
 #' @examples
-print.exemplar <- function(x, ...) {
+summary.exemplar <- function(x, ...) {
   print(format.exemplar(x, ...))
 }
 
+#' Title
+#'
+#' @param x
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+print.exemplar <- function(x, ...) {
+  print(names(attr(x, "index")))
+}
 #' Title
 #'
 #' @param x
@@ -112,7 +124,7 @@ format.exemplar <- function(x, ...) {
 #'  that the IRON algorithm uses the minimum **mean** distance vs. the minimum
 #'  **summed** distance.
 #'
-#'
+#' @export
 find_exemplar <- function(x, which = c("col","row"),
                                 distance = "euclidean",
                                 summary.method = sum,
@@ -135,6 +147,7 @@ find_exemplar <- function(x, which = c("col","row"),
   # distances. Note that we use the rowSums in either case, under the assumption
   # that if there is asymmetry the row-wise distances are appropriate.
   dist.summary <- apply(d, 1, \(.x) {
+    .x <- na.omit(.x)
     summary.method(.x)
   })
   mi <- which.min(dist.summary)

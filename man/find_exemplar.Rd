@@ -7,7 +7,6 @@
 find_exemplar(
   x,
   which = c("col", "row"),
-  na.rm = TRUE,
   distance = "euclidean",
   summary.method = sum,
   ...
@@ -17,8 +16,6 @@ find_exemplar(
 \item{x}{Matrix to operate on}
 
 \item{which}{One of c("cols","rows") for the exemplar}
-
-\item{na.rm}{Should missing values be removed prior to calculating distances}
 
 \item{distance}{A distance measure to use (see [distance()] for details).}
 

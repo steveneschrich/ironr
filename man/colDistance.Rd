@@ -4,7 +4,7 @@
 \alias{colDistance}
 \title{Calculate distances between columns in a matrix}
 \usage{
-colDistance(x, f = euclidean_distance, ...)
+colDistance(x, f = euclidean_distance)
 }
 \arguments{
 \item{x}{Matrix with multiple columns}

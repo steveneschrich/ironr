@@ -4,7 +4,7 @@
 \alias{euclidean_distance}
 \title{Title}
 \usage{
-euclidean_distance(x, y, na.action = na.dist_norm)
+euclidean_distance(x, y)
 }
 \arguments{
 \item{y}{}

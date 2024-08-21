@@ -1,0 +1,132 @@
+---
+title: "find_exemplar"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{find_exemplar}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ironr)
+```
+
+# Background
+
+One of the first steps in using IRON is the identification of a reference
+sample to normalize all other samples to. We use the term `exemplar` as
+it is the "example" representing the data. This reference sample could be
+determined on first principles. For instance, a stage II breast tumor with no
+genomic alterations to normalize against for all breast tumors. More often,
+however, we attempt to empirically identify the most central sample from among those
+being normalized.
+
+Think of a 50k/100k dimensional space where each sample is represented by a
+single point. We would like the `exemplar` of this point cloud; the point that
+is most "central" or in the middle of the cloud. That is the purpose of the
+original `findmedian` function in libaffy. Normalization generally starts by
+identifying this exemplar, then running normalization of all samples against 
+the exemplar.
+
+To fully describe the functionality of `findmedian` and equivalent ironr functions,
+we first describe the specific approach of *medoids* then generalize this to
+`exemplars`, of which `findmedian` is a special case.
+
+## Medoid
+The medoid is exactly the concept we looking for when thinking about the representative
+sample. Specifically, it appears to be defined as the representative of the data with
+the minimum sum of dissimilarities to all other data elements. Note that a medoid
+is an element of the data set, whereas centroids are averages of elements and therefore
+may not exist as a distinct point in the existing data. 
+
+Some key points:
+
+- The distance metric could be Euclidean or others.
+- Finding the medoid requires an all-vs-all distance matrix.
+
+## Exemplars as a Medoid Extension
+In this package, we refer to finding an `exemplar` as a more generic approach to
+finding the medoid. Specifically, we consider any distance measure for minimizing
+and we consider minimizing summarizations other than sums. So in our case, an
+exemplar is a representative of the data with the minimum summarization of dissimilarity
+to all other data elements. 
+
+### Distance
+While we used the term `distance metric` above,
+the more general case would be a `distance measure`. There are several characteristics
+of a distance metric (see https://en.wikipedia.org/wiki/Metric_space) that are important
+for determining the validity (or convergence) of various techniques using it. For
+our purposes, we relax these restraints and accept the problematic nature that ensues.
+Assymetric distances, etc are all considered acceptable for the more general case.
+
+### Summarization
+While the original medoid definition referred to minimizing the sum of distances,
+we can also relax this constraint. For instance, rather than the sum we could use
+the minimum "mean" distance, minimum "median" distance of points in the data. As
+is the case with distance metrics vs. measures, this has deeper implications in the
+correctness or assurance that can come from math but allows us a broader overall definition.
+
+
+## findmedian definition
+The original `libaffy` definition of finding the exemplar was known as `findmedian()`.
+There are many options that exist when using it, but it appears that the default definition
+is:
+- rmsd as the distance measure (square root of the mean of squared differences)
+- minimize the mean distance
+
+Therefore, rather than choose the exemplar with the minimum sum of Euclidean distances
+to all other points in the data, findmedian is defined as choosing the exemplar with
+the minimum mean of rmsd distances to all other points in the data.
+
+
+# Usage
+With the background in mind, the `ironr` R package provides support for findmedian,
+medoids and finding exemplars. It does this through a set of distance functions (similar
+to `stats::dist()`), an R object called `exemplar`, and routines to find the exemplar. 
+Each is discussed below.
+
+## Distance
+The `stats::dist()` function is incredibly well-optimized for performance. However, it
+is limited in specific distance metrics (and measures). As such, we reimplemented the
+approach in a more general way since we knew that rmsd (among other distances) would be
+required. There is a separate vignette on this part of the packge, but the summary is 
+that we support distances by row/column and arbitrary functions for calculating the
+distance (in addition to built-in functions). This makes the function super-slow is
+large-scale settings but provides the maximal flexibility. Of particular note is that
+we implemented an approach for making the Pearson correlation a distance metric (see `pearsonm_distance()`)
+as well as a distance correction for missing data (`na.dist_norm()`). These are
+integrated into the `distance()` function implemented in this package.
+
+## Exemplar
+We created an object called an `exemplar` that is used to hold not only the exemplar,
+but also details about how it was found. By way of example, consider the numeric data
+in the iris dataset. If we treat each variable (Sepal.Length, Sepal.Width, Petal.Length,
+Petal.Width) as "examples", then we could find the medoid variable from these:
+
+```{r}
+e <- find_exemplar(iris[,1:4])
+```
+
+Note that the `find_exemplar()` function defaults to using the mediod definition and
+returns an `exemplar` object. There is a default print statement that shows the
+exemplar name, as well as statistics around it and the other options that were not
+selected:
+```{r}
+print(e)
+```
+
+In our case, we used the medoid definition so the column with the minimum 
+(summed) distance is chosen (e.g. "Sepal.Width"). 
+
+**NOTE**: If you are interested in getting the `medoid` of a dataset, there is
+a function `medoid()` which specifically calculates this a bit more efficiently.
+
+
+The code for these routines is found in `R/exemplar.R`

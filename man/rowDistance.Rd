@@ -4,7 +4,7 @@
 \alias{rowDistance}
 \title{Calculate distances between rows in a matrix}
 \usage{
-rowDistance(x, f = euclidean_distance, ...)
+rowDistance(x, f = euclidean_distance)
 }
 \arguments{
 \item{x}{Matrix with multiple rows}

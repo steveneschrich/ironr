@@ -4,7 +4,7 @@
 \alias{pearson_distance}
 \title{Title}
 \usage{
-pearson_distance(x, y, na.action = NULL)
+pearson_distance(x, y)
 }
 \arguments{
 \item{y}{}

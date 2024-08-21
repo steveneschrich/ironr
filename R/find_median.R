@@ -1,93 +1,30 @@
-# NB: This would be the driver function
-# It would need to load in the cel files (optionally affybatch, or just for
-# the moment pm array). Then log transform, remove low values to NA (optionally),
-# then calculate using rmsd (or other options).
-#
-# This almost works. The values are off by a bit, but generally it is close.
-
-iron_findmedoid <- function() {
-
-  cf <- list.files(path=here::here("tests"),pattern = "^T.*\\.CEL", full.names = TRUE)
-
-  # Not a fan of suppressing warnings, but the phenodata it creates takes a bit
-  # of effort, so this is easier to maintain compatability with Bioconductor.
-  ab <- suppressWarnings(
-    affy::read.affybatch(
-      filenames = cf,
-      #phenoData = Biobase::AnnotatedDataFrame(data.frame(files=cf)),
-      rm.mask = FALSE, # libaffy setting
-      rm.outliers = FALSE, # libaffy setting
-      verbose = TRUE,
-      sd = FALSE # sd is not needed
-    )
-  )
-
-  # Note, right now we use libaffy::get_pm() for the rm.control, but ultimately
-  # the iron version of find median will remove it.
-  pm_array <- log2(libaffy::get_pm(ab, rm.control = TRUE))
-  pw_distances <- pairwise_col_distance(pm_array, distance_method = "rmsd",overlap_normalization=TRUE)
-
-  d <- data.frame(
-    median_sample = ifelse(pw_distances == min(pw_distances), "*",""),
-    sample_name = names(pw_distances),
-    mean_distance = pw_distances,
-    mean_intensity = colMeans(pm_array),
-    row.names = NULL
-  )
-
-
-  print(d)
-  cat("Average Distance:" , mean(pw_distances),"\n")
-
-  invisible(d)
-}
-
-
-
-# These have to be totally,super hacky versions to accomodate the needs
-# Also, we'll need a Rscript/getopt wrapper as well. These should
-# probably just be moved over to "findmedian.R" which is what it is.
-findmedian.matrix <- function(x, ignore_weak = TRUE, distance = "rmsd", verbose = FALSE, ...) {
-
-  # Calculate distances between columns using standard approach. Note that we
-  # do not use a adjustment to the distance for missingness, since this added later
-  # (asymmetrically)
-  d <- distance(x, which = "col", method = distance, na.action = NULL, ...)
-
-  # Convert dist to a matrix. The distances must be symmetric unless the distance
-  # function returns a full matrix (not a dist object). Currently it does not. We
-  # add asymmetry below.
-  d <- as.matrix(d)
-
-  # NA the diagonals. This is not needed for minimizing the sum, but mean values
-  # should not include the distance between self (even if it's 0).
-  diag(d) <- NA
-
-  # Use custom distance normalization for missingness (asymmetric, see the function).
-  offdiag <- utils::combn(1:ncol(x), 2, simplify = FALSE)
-  for (pair in offdiag ) {
-    i <- pair[1]
-    j <- pair[2]
-    d[i, j] <- d[i, j] * na.dist_norm_iron(x[,i], x[,j])
-    d[j, i] <- d[j, i] * na.dist_norm_iron(x[,j], x[,i])
-  }
-
-
-  # Calculate the sums (medoid definition) and find the minimum sum of
-  # distances. Note that we use the rowSums in either case, under the assumption
-  # that if there is asymmetry the row-wise distances are appropriate.
-  dist.summary <- rowMeans(d, na.rm = TRUE)
-  mi <- which.min(dist.summary)
-
-  # Finally, the result is either the row or column in question.
-  e <- exemplar(x, index = mi, which = "col", dist.summary = dist.summary,
-           dist.method = distance, summary.method = "mean")
-
-  if ( verbose )
-    print(e)
-
-  e
-
+#' Find median sample from dataset
+#'
+#' Implements a similar function to libaffy IRON findmedian function
+#'
+#' @details
+#' This function approximates the findmedian program from libaffy. Briefly,
+#' a medoid is identified using the rmsd distance metric and finding the
+#' sample with the smallest all-sample mean distance. There are numerous
+#' differences with the C code which is highly specific, but this function
+#' roughly approximates the functionality.
+#'
+#' Note that a more complete view of this process is given in the vignette
+#' or in the functions [medoid()] or [find_exemplar()] in this package.
+#'
+#'
+#' @param x
+#' @param which
+#' @param na.rm
+#' @param distance
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+find_median <- function(x, which=c("col","row"), na.rm = TRUE, distance = "rmsd", ...) {
+  find_exemplar(x, which=which, distance=distance, summary.method=mean)
 }
 
 #' Calculate conditional probability of overlap given query
@@ -126,7 +63,6 @@ na.dist_norm_iron <- function(x,y) {
   sum(present_in_y) / sum(present_in_both)
 }
 
-findmedian.affybatch <- function() {libaffy::getpm()}
 
 
 

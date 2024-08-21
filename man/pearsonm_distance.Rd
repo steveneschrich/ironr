@@ -4,15 +4,12 @@
 \alias{pearsonm_distance}
 \title{Calculate distance metric based on Pearson correlation}
 \usage{
-pearsonm_distance(x, y, na.action = NULL)
+pearsonm_distance(x, y)
 }
 \arguments{
 \item{x}{Vector}
 
 \item{y}{Vector}
-
-\item{na.action}{Function (or NULL) to modify distance in the presence of missing
-values.}
 }
 \description{
 Calculate distance between two vectors using 1-Pearson correlation
