@@ -73,6 +73,6 @@ read.oligo <- function(dir, pattern = NULL, ...) {
 perfect_match_probes <- function(x) {
   if (methods::is(x, "AffyBatch"))
     return(affy::pm(x))
-  if (methods::is(x, "ExpressionFeatureSet"))
-    return(oligo::pm(foo))
+  if (methods::is(x, "FeatureSet"))
+    return(oligo::pm(x))
 }
