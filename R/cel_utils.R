@@ -19,7 +19,7 @@
 #' @examples
 list.celfiles <- function(path = ".", pattern = NULL, ends_with = "\\.[cC][eE][lL]\\.gz$|\\.[cC][eE][lL]$",...) {
 
-  files <- fs::dir_info(path = path, type = "file", regexp = ends_with, ...)
+  files <- fs::dir_info(path = path, type = c("file","symlink"), regexp = ends_with, ...)
 
   if ( !is.null(pattern) ) {
     files <- dplyr::mutate(files, file = basename(path))
